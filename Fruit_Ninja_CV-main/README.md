@@ -1,6 +1,6 @@
 # Fruit Ninja: Multiple Cursor Modes
 
-A Fruit Ninja–inspired game using real‑time computer vision to control multiple cursor modes ("hand" and "eye"). The game leverages **MediaPipe** for hand and face mesh (eye) tracking, and **PyGame** for graphics, animations, and sound. Slice fruits, avoid bombs, and enjoy dynamic visual effects—all in full-screen mode.
+A Fruit Ninja–inspired game using real‑time computer vision to control multiple cursor modes ("hand" and "eye"). The game leverages **MediaPipe** for hand and face mesh (eye) tracking, and **PyGame** for graphics, animations, and sound. Slice fruits, avoid bombs, and enjoy dynamic visual effects—all in full-screen mode
 
 ## Features
 
