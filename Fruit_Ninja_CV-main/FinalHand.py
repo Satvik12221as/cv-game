@@ -41,7 +41,7 @@ except Exception as e:
 # ----------------------------
 # Game Timer Setup
 # ----------------------------
-GAME_DURATION = 60  # seconds
+GAME_DURATION = 999 # seconds
 start_time = time.time()
 
 # ----------------------------
