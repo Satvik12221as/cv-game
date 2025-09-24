@@ -54,7 +54,7 @@ except Exception as e:
 # ----------------------------
 # Game Timer Setup
 # ----------------------------
-GAME_DURATION = 60  # seconds
+GAME_DURATION = 999  # seconds
 start_time = time.time()
 
 # ----------------------------
@@ -309,6 +309,7 @@ def spawn_fruit(elapsed_time):
 fruits = []
 last_spawn_time = time.time()
 score = 0
+lives = 5
 game_over = False
 
 # ----------------------------
