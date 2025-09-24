@@ -61,7 +61,7 @@ start_time = time.time()
 # Slicing Animation Class
 # ----------------------------
 class SlicingAnimation:
-    def _init_(self, pos, color, duration=0.3, max_radius=50):
+    def __init__(self, pos, color, duration=0.3, max_radius=50):
         self.pos = pos
         self.color = color
         self.duration = duration
@@ -73,13 +73,15 @@ class SlicingAnimation:
 
     def draw(self, surface):
         progress = 1 - (self.timer / self.duration)
-        radius = int(progress * self.max_radius)
-        alpha = max(255 - int(progress * 255), 0)
-        temp_surf = pygame.Surface((self.max_radius * 2, self.max_radius * 2), pygame.SRCALPHA)
-        pygame.gfxdraw.aacircle(temp_surf, self.max_radius, self.max_radius, radius, self.color + (alpha,))
-        pygame.gfxdraw.filled_circle(temp_surf, self.max_radius, self.max_radius, radius, self.color + (alpha,))
-        temp_rect = temp_surf.get_rect(center=self.pos)
-        surface.blit(temp_surf, temp_rect)
+        radius = int(self.max_radius * progress)
+        alpha = int(255 * (1 - progress))
+        # Create a temporary surface for the circle to handle alpha transparency
+        temp_surf = pygame.Surface((radius * 2, radius * 2), pygame.SRCALPHA)
+        pygame.draw.circle(temp_surf, self.color + (alpha,), (radius, radius), radius)
+        
+        # Blit the temporary surface onto the main screen
+        surface.blit(temp_surf, (self.pos[0] - radius, self.pos[1] - radius))
+
 
     def is_finished(self):
         return self.timer <= 0
@@ -88,7 +90,7 @@ class SlicingAnimation:
 # Splash Effect Class (Improved)
 # ----------------------------
 class SplashEffect:
-    def _init_(self, pos, color, num_particles=30, duration=0.8, gravity=400):
+    def __init__(self, pos, color, num_particles=30, duration=0.8, gravity=400):
         self.pos = pos
         self.color = color
         self.duration = duration
@@ -186,7 +188,7 @@ def create_water_splash_surface(size, color, irregularity=0.2, layers=5):
 # Stain Class (Irregular Amoeba-like Water Splash Effect)
 # ----------------------------
 class Stain:
-    def _init_(self, pos, color, duration=10, size=80):
+    def __init__(self, pos, color, duration=10, size=80):
         self.pos = pos
         self.color = color
         self.duration = duration
@@ -216,7 +218,7 @@ stains = []  # persistent background water splash stains
 # Fruit Class Definition
 # ----------------------------
 class Fruit:
-    def _init_(self, pos, velocity, fruit_type):
+    def __init__(self, pos, velocity, fruit_type):
         self.pos = list(pos)         # [x, y]
         self.velocity = list(velocity)  # [vx, vy]
         self.type = fruit_type
