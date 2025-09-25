@@ -291,6 +291,7 @@ def spawn_fruit(elapsed_time):
 fruits = []
 last_spawn_time = time.time()
 score = 0
+lives = 5
 game_over = False
 
 # ----------------------------
@@ -330,7 +331,7 @@ while running:
             if event.key == pygame.K_ESCAPE:
                 running = False
 
-    if game_over:
+    if game_over or lives <= 0:
         running = False
 
     elapsed_time = time.time() - start_time
@@ -376,7 +377,16 @@ while running:
     # --- Update fruits ---
     for fruit in fruits:
         fruit.update(dt)
-    fruits = [fruit for fruit in fruits if fruit.pos[1] < screen_height + 50]
+
+    remaining_fruits = []
+    for fruit in fruits:
+        if fruit.pos[1] < screen_height + 50:
+            remaining_fruits.append(fruit)
+        else:
+            if fruit.type != "bomb":
+                lives -= 1
+                print(f"Missed a fruit! Lives left: {lives}")
+    fruits = remaining_fruits
 
     # --- Check collisions (slicing) ---
     for fruit in fruits[:]:
