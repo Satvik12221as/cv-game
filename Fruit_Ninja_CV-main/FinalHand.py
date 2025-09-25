@@ -293,7 +293,7 @@ last_spawn_time = time.time()
 score = 0
 lives = 5
 game_over = False
-
+mode = "hand"
 # ----------------------------
 # OpenCV Video Capture Setup
 # ----------------------------
