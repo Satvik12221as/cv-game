@@ -464,9 +464,14 @@ while running:
     if smoothed_cursor is not None:
         pygame.draw.circle(screen, (255, 255, 255), smoothed_cursor, 5)
     score_surface = font.render(f"Score: {score}", True, (255, 255, 255))
+    time_surface = font.render(f"Time: {remaining_time}", True, (255, 255, 255))
+    lives_surface = font.render(f"Lives: {lives}", True, (255, 255, 255))
+    mode_surface = font.render(f"Mode: {mode.capitalize()}", True, (255, 255, 255))
     screen.blit(score_surface, (10, 10))
-    timer_surface = font.render(f"Time: {remaining_time}", True, (255, 255, 255))
-    screen.blit(timer_surface, (screen_width - 150, 10))
+    screen.blit(time_surface, (screen_width - time_surface.get_width() - 10, 10))
+    screen.blit(lives_surface, (10, 50))
+    screen.blit(mode_surface, (screen_width - mode_surface.get_width() - 10, 50))
+
     pygame.display.flip()
 
 # ----------------------------
