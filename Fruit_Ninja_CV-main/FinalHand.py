@@ -303,6 +303,14 @@ menu_fruit = None
 title_font = pygame.font.Font(None, 72)
 instruction_font = pygame.font.Font(None, 36)
 
+# Variable for smoothed cursor (common for both modes)
+smoothed_cursor = None
+
+# --- Game State ---
+game_state = "main_menu"  # "main_menu" or "playing"
+menu_fruit = None
+last_menu_spawn_time = 0  # Timer for respawning menu fruit
+
 # ----------------------------
 # OpenCV Video Capture Setup
 # ----------------------------
@@ -378,103 +386,154 @@ while running:
 
 
 
-    # --- Update fruits ---
-    for fruit in fruits:
-        fruit.update(dt)
+    # --- Drawing and Game State Logic ---
+    screen.fill((54, 39, 18))  # Dark wood background
 
-    remaining_fruits = []
-    for fruit in fruits:
-        if fruit.pos[1] < screen_height + 50:
-            remaining_fruits.append(fruit)
-        else:
-            if fruit.type != "bomb":
-                lives -= 1
-                print(f"Missed a fruit! Lives left: {lives}")
-    fruits = remaining_fruits
+    if game_state == "main_menu":
+        # --- Main Menu Logic ---
+        # Spawn a new fruit if there isn't one and 2 seconds have passed
+        if menu_fruit is None and time.time() - last_menu_spawn_time > 2:
+            x = random.randint(screen_width // 4, 3 * screen_width // 4)
+            y = screen_height + 30
+            vx = random.uniform(-50, 50)
+            vy = random.uniform(-600, -450)
+            menu_fruit = Fruit((x, y), (vx, vy), "watermelon")
 
-    # --- Check collisions (slicing) ---
-    for fruit in fruits[:]:
-        if smoothed_cursor is not None:
-            dist = np.hypot(fruit.pos[0] - smoothed_cursor[0], fruit.pos[1] - smoothed_cursor[1])
-            if dist < fruit.radius:
-                if fruit.type == "bomb":
-                    anim_color = (255, 0, 0)
-                elif fruit.type == "banana":
-                    anim_color = (255, 255, 0)
-                elif fruit.type == "watermelon":
-                    anim_color = (0, 255, 0)
-                else:
-                    anim_color = (255, 0, 0)
-                slicing_animations.append(SlicingAnimation((int(fruit.pos[0]), int(fruit.pos[1])), anim_color))
-                if fruit.type != "bomb":
-                    if fruit.type == "banana":
-                        splash_color = (255, 255, 0)
-                    elif fruit.type == "watermelon":
-                        splash_color = (0, 255, 0)
-                    else:
-                        splash_color = (255, 0, 0)
-                    splash_effects.append(SplashEffect((int(fruit.pos[0]), int(fruit.pos[1])), splash_color))
-                    stains.append(Stain((int(fruit.pos[0]), int(fruit.pos[1])), splash_color, duration=10, size=random.randint(50,80)))
-                if fruit.type == "bomb":
-                    if bomb_sound:
-                        bomb_sound.play()
-                    print("Bomb sliced! Game over.")
-                    game_over = True
-                    fruits.remove(fruit)
-                    break
-                else:
+        # If a menu fruit exists, update and draw it
+        if menu_fruit is not None:
+            menu_fruit.update(dt)
+            menu_fruit.draw(screen)
+
+            # Check if it fell off the screen
+            if menu_fruit.pos[1] > screen_height + 50:
+                menu_fruit = None  # It's gone, allow a new one to spawn
+                last_menu_spawn_time = time.time()  # Start the 2-second timer now
+
+            # Check if the user slices the menu fruit
+            if smoothed_cursor is not None:
+                dist = np.hypot(menu_fruit.pos[0] - smoothed_cursor[0], menu_fruit.pos[1] - smoothed_cursor[1])
+                if dist < menu_fruit.radius:
                     if slice_sound:
                         slice_sound.play()
-                    fruits.remove(fruit)
-                    if fruit.type == "banana":
-                        score += 2
-                        print("Banana sliced! Score:", score)
+                    # Add slicing effects for the menu fruit
+                    slicing_animations.append(SlicingAnimation(menu_fruit.pos, (0, 255, 0)))
+                    splash_effects.append(SplashEffect(menu_fruit.pos, (0, 255, 0)))
+                    # Transition to the main game
+                    game_state = "playing"
+                    start_time = time.time()  # Reset game timer
+                    score = 0
+                    lives = 5
+                    menu_fruit = None # Clear the menu fruit
+
+        # Draw title and instructions
+        title_text = title_font.render("Fruit Ninja CV", True, (255, 255, 255))
+        instruction_text = instruction_font.render("Slice a fruit to start!", True, (255, 255, 255))
+        screen.blit(title_text, (screen_width / 2 - title_text.get_width() / 2, screen_height / 4))
+        screen.blit(instruction_text, (screen_width / 2 - instruction_text.get_width() / 2, screen_height / 4 + 80))
+
+    elif game_state == "playing":
+        # --- Main Gameplay Logic ---
+        # --- Spawn new fruits ---
+        if time.time() - last_spawn_time > 1.0:  # Spawn every second
+            fruits.append(spawn_fruit(elapsed_time))
+            last_spawn_time = time.time()
+
+        # --- Update fruits ---
+        for fruit in fruits:
+            fruit.update(dt)
+
+        remaining_fruits = []
+        for fruit in fruits:
+            if fruit.pos[1] < screen_height + 50:
+                remaining_fruits.append(fruit)
+            else:
+                if fruit.type != "bomb":
+                    lives -= 1
+                    print(f"Missed a fruit! Lives left: {lives}")
+        fruits = remaining_fruits
+
+        # --- Check collisions (slicing) ---
+        for fruit in fruits[:]:
+            if smoothed_cursor is not None:
+                dist = np.hypot(fruit.pos[0] - smoothed_cursor[0], fruit.pos[1] - smoothed_cursor[1])
+                if dist < fruit.radius:
+                    if fruit.type == "bomb":
+                        anim_color = (255, 0, 0)
+                    elif fruit.type == "banana":
+                        anim_color = (255, 255, 0)
                     elif fruit.type == "watermelon":
-                        score += 3
-                        print("Watermelon sliced! Score:", score)
+                        anim_color = (0, 255, 0)
                     else:
-                        score += 1
-                        print("Apple sliced! Score:", score)
+                        anim_color = (255, 0, 0)
+                    slicing_animations.append(SlicingAnimation((int(fruit.pos[0]), int(fruit.pos[1])), anim_color))
+                    if fruit.type != "bomb":
+                        if fruit.type == "banana":
+                            splash_color = (255, 255, 0)
+                        elif fruit.type == "watermelon":
+                            splash_color = (0, 255, 0)
+                        else:
+                            splash_color = (255, 0, 0)
+                        splash_effects.append(SplashEffect((int(fruit.pos[0]), int(fruit.pos[1])), splash_color))
+                        stains.append(Stain((int(fruit.pos[0]), int(fruit.pos[1])), splash_color, duration=10, size=random.randint(50,80)))
+                    if fruit.type == "bomb":
+                        if bomb_sound:
+                            bomb_sound.play()
+                        print("Bomb sliced! Game over.")
+                        game_over = True
+                        fruits.remove(fruit)
+                        break
+                    else:
+                        if slice_sound:
+                            slice_sound.play()
+                        fruits.remove(fruit)
+                        if fruit.type == "banana":
+                            score += 2
+                            print("Banana sliced! Score:", score)
+                        elif fruit.type == "watermelon":
+                            score += 3
+                            print("Watermelon sliced! Score:", score)
+                        else:
+                            score += 1
+                            print("Apple sliced! Score:", score)
 
-    # --- Update slicing animations ---
-    for anim in slicing_animations:
-        anim.update(dt)
-    slicing_animations = [anim for anim in slicing_animations if not anim.is_finished()]
+        # --- Update slicing animations ---
+        for anim in slicing_animations:
+            anim.update(dt)
+        slicing_animations = [anim for anim in slicing_animations if not anim.is_finished()]
 
-    # --- Update splash effects ---
-    for splash in splash_effects:
-        splash.update(dt)
-    splash_effects = [splash for splash in splash_effects if not splash.is_finished()]
+        # --- Update splash effects ---
+        for splash in splash_effects:
+            splash.update(dt)
+        splash_effects = [splash for splash in splash_effects if not splash.is_finished()]
 
-    # --- Update stains (persistent background water splash stains) ---
-    for stain in stains:
-        stain.update(dt)
-    stains = [stain for stain in stains if not stain.is_finished()]
+        # --- Update stains (persistent background water splash stains) ---
+        for stain in stains:
+            stain.update(dt)
+        stains = [stain for stain in stains if not stain.is_finished()]
 
-    # --- Render the game scene ---
-    screen.fill((54, 39, 18))  # dark background
-    num_lines = 10
-    for i in range(1, num_lines):
-        x = int(i * screen_width / num_lines)
-        pygame.draw.line(screen, (154, 123, 79), (x, 0), (x, screen_height), 1)
-    for stain in stains:
-        stain.draw(screen)
-    for fruit in fruits:
-        fruit.draw(screen)
-    for anim in slicing_animations:
-        anim.draw(screen)
-    for splash in splash_effects:
-        splash.draw(screen)
-    if smoothed_cursor is not None:
-        pygame.draw.circle(screen, (255, 255, 255), smoothed_cursor, 5)
-    score_surface = font.render(f"Score: {score}", True, (255, 255, 255))
-    time_surface = font.render(f"Time: {remaining_time}", True, (255, 255, 255))
-    lives_surface = font.render(f"Lives: {lives}", True, (255, 255, 255))
-    mode_surface = font.render(f"Mode: {mode.capitalize()}", True, (255, 255, 255))
-    screen.blit(score_surface, (10, 10))
-    screen.blit(time_surface, (screen_width - time_surface.get_width() - 10, 10))
-    screen.blit(lives_surface, (10, 50))
-    screen.blit(mode_surface, (screen_width - mode_surface.get_width() - 10, 50))
+        # --- Render the game scene ---
+        num_lines = 10
+        for i in range(1, num_lines):
+            x = int(i * screen_width / num_lines)
+            pygame.draw.line(screen, (154, 123, 79), (x, 0), (x, screen_height), 1)
+        for stain in stains:
+            stain.draw(screen)
+        for fruit in fruits:
+            fruit.draw(screen)
+        for anim in slicing_animations:
+            anim.draw(screen)
+        for splash in splash_effects:
+            splash.draw(screen)
+        if smoothed_cursor is not None:
+            pygame.draw.circle(screen, (255, 255, 255), smoothed_cursor, 5)
+        score_surface = font.render(f"Score: {score}", True, (255, 255, 255))
+        time_surface = font.render(f"Time: {remaining_time}", True, (255, 255, 255))
+        lives_surface = font.render(f"Lives: {lives}", True, (255, 255, 255))
+        mode_surface = font.render(f"Mode: {mode.capitalize()}", True, (255, 255, 255))
+        screen.blit(score_surface, (10, 10))
+        screen.blit(time_surface, (screen_width - time_surface.get_width() - 10, 10))
+        screen.blit(lives_surface, (10, 50))
+        screen.blit(mode_surface, (screen_width - mode_surface.get_width() - 10, 50))
 
     pygame.display.flip()
 
