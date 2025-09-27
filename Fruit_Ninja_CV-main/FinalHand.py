@@ -300,6 +300,9 @@ mode = "hand"
 #----------------------------
 game_state = "main_menu"
 menu_fruit = None
+title_font = pygame.font.Font(None, 72)
+instruction_font = pygame.font.Font(None, 36)
+
 # ----------------------------
 # OpenCV Video Capture Setup
 # ----------------------------
@@ -373,12 +376,7 @@ while running:
                                int(smoothed_cursor[1] * 0.8 + cursor_pos[1] * 0.2))
     # If no new detection, smoothed_cursor remains unchanged.
 
-    # --- Gradually Increase Spawn Rate ---
-    current_spawn_interval = max(2.0 - (elapsed_time / GAME_DURATION) * 1.5, 0.5)
-    current_time = time.time()
-    if current_time - last_spawn_time > current_spawn_interval:
-        fruits.append(spawn_fruit(elapsed_time))
-        last_spawn_time = current_time
+
 
     # --- Update fruits ---
     for fruit in fruits:
