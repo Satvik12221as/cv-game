@@ -294,6 +294,12 @@ score = 0
 lives = 5
 game_over = False
 mode = "hand"
+
+#----------------------------
+#Game State Management
+#----------------------------
+game_state = "main_menu"
+menu_fruit = None
 # ----------------------------
 # OpenCV Video Capture Setup
 # ----------------------------
